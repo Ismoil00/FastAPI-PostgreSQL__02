@@ -22,8 +22,6 @@ db_dependency = Annotated[Session, Depends(get_db)]
 
 
 # _____ PYDANTIC TYPE SECTION _____ #
-
-
 # Type definitions for Car:
 class CreateCar(BaseModel):
     model: str
@@ -50,7 +48,7 @@ class CreatePerson(BaseModel):
 app = FastAPI()
 
 
-# creating tables api:
+# _____ CREATION _____:
 @app.post("/person_info")
 async def create_person(info: CreatePerson, db: db_dependency):
     car = modules.Car(
@@ -70,11 +68,13 @@ async def create_person(info: CreatePerson, db: db_dependency):
     )
     db.add(person)
     db.commit()
+    db.refresh(person)
 
     return "Success"
 
 
-@app.get("/get_by_id/{name}")
+# _____ READING _____
+@app.get("/get_person_detail_by_name/{name}")
 async def get_person_by_id(name: str, db: db_dependency):
     person = db.query(modules.Person).filter(modules.Person.name == name).first()
     if not person:
@@ -94,3 +94,27 @@ async def get_person_by_id(name: str, db: db_dependency):
             "property": property,
         }
         return output
+
+
+# _____ DELETION _____
+@app.delete("/delete_person/{id}")
+async def delete_by_id(id: int, db: db_dependency):
+    one = db.query(modules.Person).filter(modules.Person.id == id).first()
+    db.delete(one)
+    db.commit()
+    return "success"
+
+
+# _____ UPDATE _____
+@app.post("/update_car_by_owner_name")
+async def update_car_by_owner_name(
+    name: str, new_module: str, new_color: str, got_damage: bool, db: db_dependency
+):
+    person = db.query(modules.Person).filter(modules.Person.name == name).first()
+    car = db.query(modules.Car).filter(modules.Car.id == person.car_id).first()
+    car.model = new_module
+    car.color = new_color
+    car.has_damage = got_damage
+    db.commit()
+    db.refresh(car)
+    return "success"
