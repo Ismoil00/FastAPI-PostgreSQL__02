@@ -77,7 +77,9 @@ async def create_property(info: types.CreateProperty, db: db_dependency):
 async def get_person(name: str, db: db_dependency):
     person = db.query(modules.Person).filter(modules.Person.name == name).first()
     if not person:
-        raise HTTPException(status_code=404, detail="Person was not found")
+        raise HTTPException(
+            status_code=404, detail=f"a Person with the {name} was not found"
+        )
     else:
         car = db.query(modules.Car).filter(modules.Car.id == person.car_id).first()
         property = (
@@ -100,7 +102,7 @@ async def get_person(name: str, db: db_dependency):
 async def get_car(model: str, db: db_dependency):
     car = db.query(modules.Car).filter(modules.Car.model == model).all()
     if not car:
-        raise HTTPException(status_code=400, detail=f"such {model} car was not found")
+        raise HTTPException(status_code=400, detail=f"a {model} car was not found")
     else:
         return car
 
@@ -134,7 +136,7 @@ async def delete_by_id(name: str, db: db_dependency):
 
 
 # deleting car by its model type:
-@app.delete("/delete_car" / {model})
+@app.delete("/delete_car/{model}")
 async def delete_car(model: str, db: db_dependency):
     car = db.query(modules.Car).filter(modules.Car.model == model).first()
     if not car:
@@ -153,8 +155,8 @@ async def delete_property(info: types.CreateProperty, db: db_dependency):
     prop = (
         db.query(modules.Property)
         .filter(
-            modules.Property.floor == info.floor
-            and modules.Property.square == info.square
+            modules.Property.floor == info.floor,
+            modules.Property.square == info.square
         )
         .first()
     )
